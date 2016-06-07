@@ -3,3 +3,4 @@
 #It might also be necessary to adjust the path of check_omd.py
 
 #nrpe ALL = (site) NOPASSWD: /usr/lib64/nagios/plugins/check_omd.py
+#Defaults:nrpe !requiretty
