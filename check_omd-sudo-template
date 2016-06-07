@@ -1,0 +1,5 @@
+#Make _SURE_ to check usernames and paths, depending on your Linux distribution
+#Replace site with your OMD site name and nrpe with your NRPE user
+#It might also be necessary to adjust the path of check_omd.py
+
+#nrpe ALL = (site) NOPASSWD: /usr/lib64/nagios/plugins/check_omd.py
