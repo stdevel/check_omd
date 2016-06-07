@@ -13,6 +13,6 @@ releases:
     files: 
       - 
         name: check_netio.py
-        url: "file:///check_netio.py"
+        url: "file:///check_omd.py"
         description: "Initial release"
         checksum: 5ef30b3ea32bd114d925575a3b79131b
