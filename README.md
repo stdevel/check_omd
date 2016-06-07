@@ -80,7 +80,7 @@ define service{
 }
 ```
 
-# Trobleshooting
+# Troubleshooting
 ##Plugin not executed as OMD site user
 The plugin will not work if is not executed as site user:
 ```
