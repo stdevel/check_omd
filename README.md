@@ -1,4 +1,7 @@
 # check_omd
+
+![Example Icinga screenshot](https://raw.githubusercontent.com/stdevel/check_omd/master/Icinga_Screenshot.jpg "Example Icinga screenshot")
+
 ``check_omd`` is a Nagios / Icinga plugin for checking a particular [OMD](http://www.omdistro.org) site's services.
 
 # Requirements
