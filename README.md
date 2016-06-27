@@ -16,6 +16,7 @@ The following parameters can be specified:
 |:----------|:------------|
 | `-d` / `--debug` | enable debugging outputs (*default: no*) |
 | `-h` / `--help` | shows help and quits |
+| `-w` / `--warning` | defines one or more services that only should throw a warning if not running (*useful for fragile stuff like npcd*) |
 | `-x` / `--exclude` | excludes a particular service from the check |
 | `--version` | prints programm version and quits |
 
@@ -36,6 +37,12 @@ OMD site ``giertz`` with a well-known daemon, that's crashing sometimes:
 ```
 $ /opt/check_omd.py -x npcd
 OK: OMD site 'giertz' services are running.
+```
+
+OMD site ``clpmchn``, excluding npcd from throwing critical states:
+```
+$ /opt/check_omd.py -w npcd
+WARNING: OMD site 'clpmchn' has service(s) in warning state: 'npcd'
 ```
 
 # Installation
