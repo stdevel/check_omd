@@ -96,3 +96,9 @@ taylor
 $ ./check_omd.py 
 UNKNOWN: unable to check site: 'omd: no such site: taylor' - did you miss running this plugin as OMD site user?
 ```
+
+An error message like this will be displayed if multiple OMD sites are available and you're running the plugin as root:
+```
+# ./check_omd.py
+UNKOWN: unable to check site, it seems this plugin is executed as root (use OMD site context!)
+````
