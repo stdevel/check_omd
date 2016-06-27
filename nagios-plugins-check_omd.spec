@@ -1,5 +1,5 @@
 Name:           nagios-plugins-check_omd
-Version:        1.0
+Version:        1.1
 Release:        1%{?dist}
 Summary:        A Nagios / Icinga plugin for checking OMD sites.
 
@@ -58,5 +58,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Mon Jun 27 2016 Christian Stankowic <info@stankowic-development.net> - 1.1.1
+- updated to upstream  version 1.1.0
+- added -w / --warning option for excluding a service from generating critical states
+- added hint when plugin executed as root
+
 * Tue Jun 07 2016 Christian Stankowic <info@stankowic-development.net> - 1.0.1
 - Initial release
