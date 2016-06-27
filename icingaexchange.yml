@@ -8,11 +8,11 @@ type: Plugin
 license: gplv2
 releases: 
   - 
-    name: 1.0
-    description: "1.0 Release"
+    name: 1.1.0
+    description: "1.1.0 Release"
     files: 
       - 
         name: check_netio.py
         url: "file:///check_omd.py"
         description: "Initial release"
-        checksum: 5ef30b3ea32bd114d925575a3b79131b
+        checksum: df76dfdeedb07b8c7df52ae621b57c19
