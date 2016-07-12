@@ -5,10 +5,10 @@
 ``check_omd`` is a Nagios / Icinga plugin for checking a particular [OMD](http://www.omdistro.org) site's services.
 
 # Requirements
-I successfully tested the plugin with OMD site versions 1.20 and 1.30. As the plugin needs to be executed **by the site user**, a sudo rule is needed. A template (``check_omd-sudo-template``) is part of the repository.
+I successfully tested the plugin with OMD site versions 1.20 and 1.30. As the plugin needs to be executed **by the site user**, a sudo rule is needed. A template (*``check_omd-sudo-template``*) is part of the repository.
 
 # Usage
-By default, the script checks all services of the site - it is also possible to exclude services if they are predicted to fail in your environment (``-x`` / ``--exclude`` parameters).
+By default, the script checks all services of the site - it is also possible to exclude services if they are predicted to fail in your environment (*``-x`` / ``--exclude`` parameters*).
 
 The following parameters can be specified:
 
