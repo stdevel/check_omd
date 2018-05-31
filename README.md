@@ -48,7 +48,6 @@ WARNING: OMD site 'clpmchn' has service(s) in warning state: 'npcd'
 # Installation
 To install the plugin, move the Python script, the agent configuration and sudo rule into their appropriate directories. The paths may vary, depending on your Linux distribution and architecture. For RPM-based distribtions, proceed with the following steps:
 ```
-
 # mv check_omd.py /usr/lib64/nagios/plugins
 # mv check_omd-sudo-template /etc/sudoers.d/
 # chmod +x /usr/lib64/nagios/plugins/check_omd.py
