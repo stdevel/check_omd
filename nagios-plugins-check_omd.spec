@@ -58,8 +58,11 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
-* Mon Jun 27 2016 Christian Stankowic <info@stankowic-development.net> - 1.1.1
-- updated to upstream  version 1.1.0
+* Thu May 31 2018 Christian Stankowic <info@cstan.io> - 1.1.1
+- rebased to upstream version 1.1.1
+
+* Mon Jun 27 2016 Christian Stankowic <info@stankowic-development.net> - 1.1.0
+- updated to upstream version 1.1.0
 - added -w / --warning option for excluding a service from generating critical states
 - added hint when plugin executed as root
 

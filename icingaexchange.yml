@@ -1,18 +1,18 @@
 name: check_omd
 description: "file:///README.md"
 url: "https://github.com/stdevel/check_omd"
-tags: OMD,Nagios,Icinga
+tags: OMD,Nagios,Icinga,Icinga2
 vendor: Linux
 target: Operating System
 type: Plugin
 license: gplv3
 releases: 
   - 
-    name: 1.1.0
-    description: "1.1.0 Release"
+    name: 1.1.1
+    description: "Release 1.1.1"
     files: 
       - 
         name: check_omd.py
         url: "file:///check_omd.py"
-        description: "Initial release"
-        checksum: df76dfdeedb07b8c7df52ae621b57c19
+        description: "Release 1.1.1"
+        checksum: 17235ca90db9bd7d94988c847de67418
