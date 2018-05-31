@@ -5,7 +5,7 @@
 ``check_omd`` is a Nagios / Icinga plugin for checking a particular [OMD](http://www.omdistro.org) site's services.
 
 # Requirements
-I successfully tested the plugin with OMD site versions 1.20 and 1.30. As the plugin needs to be executed **by the site user**, a sudo rule is needed. A template (*``check_omd-sudo-template``*) is part of the repository.
+I successfully tested the plugin with OMD site versions 1.20 to 2.70. As the plugin needs to be executed **by the site user**, a sudo rule is needed. A template (*``check_omd-sudo-template``*) is part of the repository.
 
 # Usage
 By default, the script checks all services of the site - it is also possible to exclude services if they are predicted to fail in your environment (*``-x`` / ``--exclude`` parameters*).
@@ -23,38 +23,50 @@ The following parameters can be specified:
 ## Examples
 The following example indicates an running OMD site:
 ```
-$ /opt/check_omd.py 
+$ ./check_omd.py 
 OK: OMD site 'stankowic' services are running.
 ```
 
 A site with a failed ``nagios`` service:
 ```
-$ /opt/check_omd.py 
+$ ./check_omd.py 
 CRITICAL: OMD site 'hansel' has failed service(s): 'nagios'
 ```
 
 OMD site ``giertz`` with a well-known daemon, that's crashing sometimes:
 ```
-$ /opt/check_omd.py -x npcd
+$ ./check_omd.py -x npcd
 OK: OMD site 'giertz' services are running.
 ```
 
 OMD site ``clpmchn``, excluding npcd from throwing critical states:
 ```
-$ /opt/check_omd.py -w npcd
+$ ./check_omd.py -w npcd
 WARNING: OMD site 'clpmchn' has service(s) in warning state: 'npcd'
 ```
 
 # Installation
-To install the plugin, move the Python script, the NRPE configuration and sudo rule into their appropriate directories. The paths may vary, depending on your Linux distribution and architecture. For RPM-based distribtions, proceed with the following steps:
+To install the plugin, move the Python script, the agent configuration and sudo rule into their appropriate directories. The paths may vary, depending on your Linux distribution and architecture. For RPM-based distribtions, proceed with the following steps:
 ```
-# mv check_omd.cfg /etc/nrpe.d/
+
 # mv check_omd.py /usr/lib64/nagios/plugins
 # mv check_omd-sudo-template /etc/sudoers.d/
 # chmod +x /usr/lib64/nagios/plugins/check_omd.py
 # chmod 0440 /etc/sudoers.d/check_omd-sudo-template
+```
+
+When using NRPE, copy the appropriate configuration and restart the daemon:
+```
+# mv check_omd.cfg /etc/nrpe.d/
 # service nrpe restart
 ```
+
+When using Icinga2, copy the configuration to **ITL** (*Icinga Template Library*), e.g.:
+```
+# cp check_omd.conf /usr/share/icinga2/include/plugins-contrib.d/
+# service icinga2 restart
+```
+
 Make sure to alter the sudo configuration to match your OMD site name, e.g.:
 ```
 nrpe ALL = (stankowic) NOPASSWD: /usr/lib64/nagios/plugins/check_omd.py
@@ -64,9 +76,11 @@ It also possible to create a RPM file for your Linux distribution with the RPM s
 ```
 $ rpmbuild -ba nagios-plugins-check_omd.spec
 ```
-The RPM spec has been tested on Enterprise Linux 5 to 7, i386 and x86_64.
+The RPM spec has been tested on Enterprise Linux 5 to 7, i386 and x86_64. Currently, the RPM package only includes NRPE-related configuration, Icinga2 will follow.
 
 # Configuration
+
+## Nagios / Icinga 1.x
 Inside Nagios / Icinga you will need to configure a remote check command, e.g. for NRPE:
 ```
 #check_nrpe_omd
@@ -87,8 +101,44 @@ define service{
 }
 ```
 
+## Icinga2
+Define a service like this:
+```
+apply Service for (SITE => config in host.vars.omd_sites) {
+  import "generic-service"
+  check_command = "check_omd"
+  if (host.name != NodeName) {
+    command_endpoint = host.name
+  }
+  vars += config
+  assign where host.vars.app == "omd"
+  ignore where host.vars.noagent
+}
+```
+
+Create ``omd_site`` dictionaries for your hosts and assign the ``app`` variable:
+```
+object Host "st-mon04.stankowic.loc" {
+  import "linux-host"
+  ...
+  vars.app = "omd"
+  ...
+  vars.omd_sites["PROC: OMD pinkepank"] = {
+    omd_site = "pinkepank"
+  }
+  vars.omd_sites["PROC: OMD giertz"] = {
+    omd_site = "giertz"
+  }
+```
+
+Validate the configuration and reload the Icinga2 daemon:
+```
+# icinga2 daemon -C
+# service icinga2 reload
+```
+
 # Troubleshooting
-##Plugin not executed as OMD site user
+## Plugin not executed as OMD site user
 The plugin will not work if is not executed as site user:
 ```
 $ whoami
