@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -32,7 +32,7 @@ def get_site_status():
     """
     #get username
     proc = subprocess.Popen("whoami", stdout=subprocess.PIPE)
-    site = proc.stdout.read().rstrip()
+    site = proc.stdout.read().rstrip().decode("utf-8")
     LOGGER.debug("It seems like I'm OMD site '%s'", site)
 
     #get OMD site status
@@ -45,21 +45,23 @@ def get_site_status():
 
     if err:
         if "no such site" in err:
-            print "UNKNOWN: unable to check site: '{0}' - did you miss " \
-                "running this plugin as OMD site user?".format(err.rstrip())
+            print("UNKNOWN: unable to check site: '{0}' - did you miss " \
+                "running this plugin as OMD site user?".format(err.rstrip()))
         else:
-            print "UNKNOWN: unable to check site: '{0}'".format(err.rstrip())
+            print("UNKNOWN: unable to check site: '{0}'".format(err.rstrip()))
         exit(3)
     if res:
         #try to find out whether omd was executed as root
-        if res.count("OVERALL") > 1:
-            print "UNKOWN: unable to check site, it seems this plugin is " \
-                "executed as root (use OMD site context!)"
+        if res.count(bytes("OVERALL", "utf-8")) > 1:
+            print("UNKOWN: unable to check site, it seems this plugin is " \
+                "executed as root (use OMD site context!)")
             exit(3)
 
         #check all services
         fail_srvs = []
         warn_srvs = []
+        restarted_srvs = []
+
         LOGGER.debug("Got result '%s'", res)
         for line in io.StringIO(res.decode('utf-8')):
             service = line.rstrip().split(" ")[0]
@@ -74,25 +76,39 @@ def get_site_status():
                         )
                         warn_srvs.append(service)
                     else:
-                        fail_srvs.append(service)
-                        LOGGER.debug(
-                            "%s service has failed state " \
-                            "(%s)", service, status
-                        )
+                        if OPTIONS.heal:
+                            cmd = ['omd', 'restart', service]
+                            LOGGER.debug("running command '%s'", cmd)
+                            proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                            res2, err2 = proc.communicate()
+                            print("{}".format(res2.rstrip().decode("utf-8")))
+                            restarted_srvs.append(service)
+                        else:
+                            fail_srvs.append(service)
+                            LOGGER.debug(
+                                "%s service has failed state " \
+                                "(%s)", service, status
+                            )
             else:
                 LOGGER.debug(
                     "Ignoring '%s' as it's blacklisted.", service
                 )
+        if OPTIONS.heal:
+            if len(restarted_srvs) > 0:
+                print("WARNING: Restarted services on site '{0}': '{1}'".format(site, ' '.join(restarted_srvs)))
+                exit(1)
+            else:
+                exit(0)
         if len(fail_srvs) == 0 and len(warn_srvs) == 0:
-            print "OK: OMD site '{0}' services are running.".format(site)
+            print("OK: OMD site '{0}' services are running.".format(site))
             exit(0)
         elif len(fail_srvs) > 0:
-            print "CRITICAL: OMD site '{0}' has failed service(s): " \
-                "'{1}'".format(site, ' '.join(fail_srvs))
+            print("CRITICAL: OMD site '{0}' has failed service(s): " \
+                "'{1}'".format(site, ' '.join(fail_srvs)))
             exit(2)
         else:
-            print "WARNING: OMD site '{0}' has service(s) in warning state: " \
-                "'{1}'".format(site, ' '.join(warn_srvs))
+            print("WARNING: OMD site '{0}' has service(s) in warning state: " \
+                "'{1}'".format(site, ' '.join(warn_srvs)))
             exit(1)
 
 
@@ -103,7 +119,7 @@ if __name__ == "__main__":
  the script only checks a site's overall status. It is also possible to exclude
  particular services and only check the remaining services (e.g. rrdcached,
  npcd, icinga, apache, crontab).
-    
+
 Checkout the GitHub page for updates: https://github.com/stdevel/check_omd'''
     PARSER = OptionParser(description=DESC, version=__version__)
 
@@ -126,6 +142,11 @@ Checkout the GitHub page for updates: https://github.com/stdevel/check_omd'''
         metavar="SERVICE", help="defines one or more services that only " \
         "should throw a warning if not running (useful for fragile stuff " \
         "like npcd, default: none)"
+    )
+    #-H/ --heal
+    PARSER.add_option(
+        "-H", "--heal", dest="heal", default=False, action="store_true",
+        help="automatically restarts the services that are not running (default: no)"
     )
 
     #parse arguments
