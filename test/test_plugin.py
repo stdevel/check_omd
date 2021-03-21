@@ -1,7 +1,7 @@
 """
 Plugin unit tests
 """
-import os
+
 
 def test_exclude(host):
     """

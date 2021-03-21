@@ -13,6 +13,7 @@ https://github.com/stdevel/check_omd
 from optparse import OptionParser
 import subprocess
 import io
+import sys
 import logging
 
 __version__ = "1.1.1"
@@ -50,13 +51,13 @@ def get_site_status():
                 "running this plugin as OMD site user?".format(err.rstrip()))
         else:
             print("UNKNOWN: unable to check site: '{0}'".format(err.rstrip()))
-        exit(3)
+        sys.exit(3)
     if res:
         #try to find out whether omd was executed as root
         if res.count(bytes("OVERALL", "utf-8")) > 1:
             print("UNKOWN: unable to check site, it seems this plugin is " \
                 "executed as root (use OMD site context!)")
-            exit(3)
+            sys.exit(3)
 
         #check all services
         fail_srvs = []
@@ -80,7 +81,12 @@ def get_site_status():
                         if OPTIONS.heal:
                             cmd = ['omd', 'restart', service]
                             LOGGER.debug("running command '%s'", cmd)
-                            proc = subprocess.Popen(cmd, stderr=subprocess.PIPE, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+                            proc = subprocess.Popen(
+                                cmd,
+                                stderr=subprocess.PIPE,
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE
+                            )
                             res2, err2 = proc.communicate()
                             print("{}".format(res2.rstrip().decode("utf-8")))
                             restarted_srvs.append(service)
@@ -96,21 +102,25 @@ def get_site_status():
                 )
         if OPTIONS.heal:
             if len(restarted_srvs) > 0:
-                print("WARNING: Restarted services on site '{0}': '{1}'".format(site, ' '.join(restarted_srvs)))
-                exit(1)
+                print(
+                    "WARNING: Restarted services on site '{0}': '{1}'".format(
+                        site, ' '.join(restarted_srvs)
+                    )
+                )
+                sys.exit(1)
             else:
-                exit(0)
+                sys.exit(0)
         if len(fail_srvs) == 0 and len(warn_srvs) == 0:
             print("OK: OMD site '{0}' services are running.".format(site))
-            exit(0)
+            sys.exit(0)
         elif len(fail_srvs) > 0:
             print("CRITICAL: OMD site '{0}' has failed service(s): " \
                 "'{1}'".format(site, ' '.join(fail_srvs)))
-            exit(2)
+            sys.exit(2)
         else:
             print("WARNING: OMD site '{0}' has service(s) in warning state: " \
                 "'{1}'".format(site, ' '.join(warn_srvs)))
-            exit(1)
+            sys.exit(1)
 
 
 
