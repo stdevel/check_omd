@@ -18,6 +18,7 @@ The following parameters can be specified:
 | `-h` / `--help` | shows help and quits |
 | `-w` / `--warning` | defines one or more services that only should throw a warning if not running (*useful for fragile stuff like npcd*) |
 | `-x` / `--exclude` | excludes a particular service from the check |
+| `-H` / `--heal` | automatically restarts the services that are not running |
 | `--version` | prints programm version and quits |
 
 ## Examples
