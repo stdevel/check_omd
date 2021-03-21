@@ -42,6 +42,7 @@ def get_site_status():
         cmd, stderr=subprocess.PIPE, stdin=subprocess.PIPE, stdout=subprocess.PIPE
     )
     res, err = proc.communicate()
+    err = err.decode('utf-8')
 
     if err:
         if "no such site" in err:
