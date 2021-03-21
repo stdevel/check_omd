@@ -1,0 +1,14 @@
+Vagrant.configure("2") do |config|
+  config.vm.define "omd" do |omd|
+    omd.vm.hostname = "omd"
+    omd.vm.box = "generic/centos7"
+    # define port forwardings for external tests
+    omd.vm.network "forwarded_port", guest: 443, host: 8443
+    # install and configure OMD
+    omd.vm.synced_folder ".", "/vagrant", type: "rsync"
+    omd.vm.provision "ansible_local" do |ansible|
+      ansible.playbook = "omd.yml"
+      ansible.galaxy_role_file = "requirements.yml"
+    end
+  end
+end
