@@ -6,9 +6,16 @@ vendor: Linux
 target: Operating System
 type: Plugin
 license: gplv3
-releases: 
-  - 
-    name: 1.1.1
+releases:
+  - name: 1.2.0
+    description: "Release 1.2.0"
+    files: 
+      - 
+        name: check_omd.py
+        url: "file:///check_omd.py"
+        description: "Release 1.2.0"
+        checksum: db0d3dc1c070958b28dff17bab60eda6
+  - name: 1.1.1
     description: "Release 1.1.1"
     files: 
       - 
