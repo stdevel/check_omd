@@ -1,0 +1,32 @@
+---
+- name: Configure OMD testing machine
+  hosts: all
+  become: true
+  pre_tasks:
+    - name: Install requirements
+      yum:
+        name:
+          - git
+          - python3
+
+  post_tasks:
+    - name: Disable firewall
+      service:
+        name: firewalld
+        state: stopped
+        enabled: false
+
+    - name: Install plugin
+      git:
+        repo: https://github.com/stdevel/check_omd.git
+        dest: /opt/check_omd
+
+  roles:
+    - role: stdevel.omd
+      omd_sites:
+        - name: icinga2
+          core: icinga2
+          default_gui: thruk
+          thruk_cookie_auth: false
+          remove_nagios_protection: false
+          admin_password: omd
