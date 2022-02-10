@@ -21,6 +21,7 @@ The following parameters can be specified:
 | `-w` / `--warning` | defines one or more services that only should throw a warning if not running (*useful for fragile stuff like npcd*) |
 | `-x` / `--exclude` | excludes a particular service from the check |
 | `-H` / `--heal` | automatically restarts the services that are not running |
+| `-t` / `--timeout` | after how many seconds a process should run into a timeout |
 | `--version` | prints programm version and quits |
 
 ## Examples
