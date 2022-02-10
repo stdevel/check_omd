@@ -15,8 +15,11 @@ import subprocess
 import io
 import sys
 import logging
+import stat
+import os.path
+import time
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 """
 str: Program version
 """
@@ -25,29 +28,33 @@ LOGGER = logging.getLogger('check_omd')
 logging: Logger instance
 """
 
+def raise_timeout(cmd, timeout):
+    print ("CRITICAL - executing command '{}' exceeded {} seconds timeout".format(" ".join(cmd), timeout))
+    if OPTIONS.heal:
+        os.remove(lockfile)
+        LOGGER.debug("removing lockfile %s", lockfile)
+    sys.exit(2)
 
 def get_site_status():
     """
     Retrieves a particular site's status
     """
     # get username
-    proc = subprocess.Popen("whoami", stdout=subprocess.PIPE)
-    site = proc.stdout.read().rstrip().decode("utf-8")
+    proc = subprocess.run(["whoami"], stdout=subprocess.PIPE)
+    site = proc.stdout.decode('utf-8').rstrip()
     LOGGER.debug("It seems like I'm OMD site '%s'", site)
 
     # get OMD site status
     cmd = ['omd', 'status', '-b']
     LOGGER.debug("running command '%s'", cmd)
-    proc = subprocess.Popen(
-        cmd,
-        stderr=subprocess.PIPE,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE
-    )
-    res, err = proc.communicate()
-    err = err.decode('utf-8')
 
-    if err:
+    try:
+        proc = subprocess.run(cmd,timeout=OPTIONS.timeout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    except subprocess.TimeoutExpired:
+        raise_timeout(cmd,timeout=OPTIONS.timeout)
+
+    if proc.stderr:
+        err = proc.stderr.decode('utf-8')
         if "no such site" in err:
             print(
                 "UNKNOWN: unable to check site: '{0}' - did you miss "
@@ -55,23 +62,24 @@ def get_site_status():
             )
         else:
             print("UNKNOWN: unable to check site: '{0}'".format(err.rstrip()))
-        sys.exit(3)
-    if res:
+        return 3
+
+    if proc.stdout:
         # try to find out whether omd was executed as root
-        if res.count(bytes("OVERALL", "utf-8")) > 1:
+        if proc.stdout.count(bytes("OVERALL", "utf-8")) > 1:
             print(
-                "UNKOWN: unable to check site, it seems this plugin is "
+                "UNKNOWN: unable to check site, it seems this plugin is "
                 "executed as root (use OMD site context!)"
             )
-            sys.exit(3)
+            return 3
 
         # check all services
         fail_srvs = []
         warn_srvs = []
         restarted_srvs = []
 
-        LOGGER.debug("Got result '%s'", res)
-        for line in io.StringIO(res.decode('utf-8')):
+        LOGGER.debug("Got result '%s'", proc.stdout)
+        for line in io.StringIO(proc.stdout.decode('utf-8')):
             service = line.rstrip().split(" ")[0]
             status = line.rstrip().split(" ")[1]
             if service not in OPTIONS.exclude:
@@ -87,15 +95,18 @@ def get_site_status():
                         if OPTIONS.heal:
                             cmd = ['omd', 'restart', service]
                             LOGGER.debug("running command '%s'", cmd)
-                            proc = subprocess.Popen(
-                                cmd,
-                                stderr=subprocess.PIPE,
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE
-                            )
-                            res2, err2 = proc.communicate()
-                            print("{}".format(res2.rstrip().decode("utf-8")))
-                            restarted_srvs.append(service)
+                            try:
+                                proc = subprocess.run(cmd,timeout=OPTIONS.timeout)
+                            except subprocess.TimeoutExpired:
+                                raise_timeout(cmd,OPTIONS.timeout)
+
+                            if proc.returncode == 0:
+                                restarted_srvs.append(service)
+                                LOGGER.debug("%s restarted successfully", service)
+                            else:
+                                fail_srvs.append(service)
+                                LOGGER.debug("%s restart FAILED", service)
+
                         else:
                             fail_srvs.append(service)
                             LOGGER.debug(
@@ -107,33 +118,44 @@ def get_site_status():
                     "Ignoring '%s' as it's blacklisted.", service
                 )
         if OPTIONS.heal:
-            if len(restarted_srvs) > 0:
-                print(
-                    "WARNING: Restarted services on site '{0}': '{1}'".format(
-                        site, ' '.join(restarted_srvs)
+            if len(fail_srvs) == 0 and len(restarted_srvs) == 0:
+               return 0
+            returncode = 1
+            if len(fail_srvs) > 0:
+                print("CRITICAL - could not restart {} service(s) on site '{}': '{}'".format(
+                    len(fail_srvs), site, ' '.join(fail_srvs)
                     )
                 )
-                sys.exit(1)
-            else:
-                sys.exit(0)
+                returncode = 2
+            if len(restarted_srvs) > 0:
+                print(
+                    "WARNING: Restarted {} service(s) on site '{}': '{}'".format(
+                        len(restarted_srvs), site, ' '.join(restarted_srvs)
+                    )
+                )
+            return returncode
+
         if len(fail_srvs) == 0 and len(warn_srvs) == 0:
             print("OK: OMD site '{0}' services are running.".format(site))
-            sys.exit(0)
+            return 0
         elif len(fail_srvs) > 0:
             print(
                 "CRITICAL: OMD site '{0}' has failed service(s): "
                 "'{1}'".format(site, ' '.join(fail_srvs))
             )
-            sys.exit(2)
+            return 2
         else:
             print(
                 "WARNING: OMD site '{0}' has service(s) in warning state: "
                 "'{1}'".format(site, ' '.join(warn_srvs))
             )
-            sys.exit(1)
+            return 1
 
 
 if __name__ == "__main__":
+    if sys.version_info[0] < 3 or (sys.version_info[0] == 3 and sys.version_info[1] < 6):
+        print ("Unsupported python version, 3.6 required, you have {}".format(sys.version))
+        sys.exit(2)
     # define description, version and load parser
     DESC = '''%prog is used to check a particular OMD site status. By default,
  the script only checks a site's overall status. It is also possible to exclude
@@ -174,6 +196,12 @@ if __name__ == "__main__":
         "like npcd, default: none)"
     )
 
+    # -t / --timeout
+    FILTER_OPTS.add_argument(
+        "-t", "--timeout", dest="timeout", default=1800, action="store",
+        help="after how many seconds a process should run into a timeout", type=int
+    )
+
     # parse arguments
     OPTIONS = PARSER.parse_args()
 
@@ -186,5 +214,27 @@ if __name__ == "__main__":
 
     LOGGER.debug("OPTIONS: %s", OPTIONS)
 
-    # check site status
-    get_site_status()
+    lockfile = '/tmp/check_omd.lock'
+
+    if OPTIONS.heal:
+        if (os.path.isfile(lockfile)):
+            fileage = int(time.time() - os.stat(lockfile)[stat.ST_MTIME])
+            LOGGER.debug("%s is %s seconds old", lockfile, fileage)
+            if fileage > OPTIONS.timeout:
+                print ("Lockfile too old, deleting lockfile")
+                os.remove(lockfile)
+                sys.exit(0)
+            print ("CRITICAL - Lockfile exists, exit program")
+            sys.exit(2)
+        else:
+            f = open(lockfile, 'x')
+            f.close()
+            LOGGER.debug("created lockfile %s", lockfile)
+            # check site status
+            exitcode = get_site_status()
+            os.remove(lockfile)
+            LOGGER.debug("removing lockfile %s", lockfile)
+            sys.exit(exitcode)
+    else:
+        exitcode = get_site_status()
+        sys.exit(exitcode)
