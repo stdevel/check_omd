@@ -44,7 +44,7 @@ def get_site_status():
     Retrieves a particular site's status
     """
     # get username
-    proc = subprocess.run(["whoami"], stdout=subprocess.PIPE)
+    proc = subprocess.run(["whoami"], stdout=subprocess.PIPE, check=False)
     site = proc.stdout.decode('utf-8').rstrip()
     LOGGER.debug("It seems like I'm OMD site '%s'", site)
 
@@ -53,7 +53,13 @@ def get_site_status():
     LOGGER.debug("running command '%s'", cmd)
 
     try:
-        proc = subprocess.run(cmd,timeout=OPTIONS.timeout,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        proc = subprocess.run(
+            cmd,
+            timeout=OPTIONS.timeout,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            check=False
+        )
     except subprocess.TimeoutExpired:
         raise_timeout(cmd,timeout=OPTIONS.timeout)
 
@@ -98,7 +104,7 @@ def get_site_status():
                             cmd = ['omd', 'restart', service]
                             LOGGER.debug("running command '%s'", cmd)
                             try:
-                                proc = subprocess.run(cmd,timeout=OPTIONS.timeout)
+                                proc = subprocess.run(cmd,timeout=OPTIONS.timeout, check=False)
                             except subprocess.TimeoutExpired:
                                 raise_timeout(cmd,OPTIONS.timeout)
 
