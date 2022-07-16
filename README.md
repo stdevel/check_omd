@@ -178,4 +178,10 @@ An error message like this will be displayed if multiple OMD sites are available
 ```shell
 # ./check_omd.py
 UNKOWN: unable to check site, it seems this plugin is executed as root (use OMD site context!)
-````
+```
+
+## Contributors
+
+Thanks a lot for your support:
+
+- lgmu
