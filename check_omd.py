@@ -35,8 +35,8 @@ def raise_timeout(cmd, timeout):
     _cmd = " ".join(cmd)
     print(f"CRITICAL - executing command '{_cmd}' exceeded {timeout} seconds timeout")
     if OPTIONS.heal:
-        os.remove(lockfile)
-        LOGGER.debug("removing lockfile %s", lockfile)
+        os.remove(LOCKFILE)
+        LOGGER.debug("removing LOCKFILE %s", LOCKFILE)
     sys.exit(2)
 
 def get_site_status():
@@ -225,27 +225,27 @@ if __name__ == "__main__":
 
     LOGGER.debug("OPTIONS: %s", OPTIONS)
 
-    lockfile = '/tmp/check_omd.lock'
+    LOCKFILE = '/tmp/check_omd.lock'
 
     if OPTIONS.heal:
-        if (os.path.isfile(lockfile)):
-            fileage = int(time.time() - os.stat(lockfile)[stat.ST_MTIME])
-            LOGGER.debug("%s is %s seconds old", lockfile, fileage)
+        if os.path.isfile(LOCKFILE):
+            fileage = int(time.time() - os.stat(LOCKFILE)[stat.ST_MTIME])
+            LOGGER.debug("%s is %s seconds old", LOCKFILE, fileage)
             if fileage > OPTIONS.timeout:
                 print ("Lockfile too old, deleting lockfile")
-                os.remove(lockfile)
+                os.remove(LOCKFILE)
                 sys.exit(0)
             print ("CRITICAL - Lockfile exists, exit program")
             sys.exit(2)
         else:
             f = open(lockfile, 'x')
             f.close()
-            LOGGER.debug("created lockfile %s", lockfile)
+            LOGGER.debug("created lockfile %s", LOCKFILE)
             # check site status
-            exitcode = get_site_status()
-            os.remove(lockfile)
-            LOGGER.debug("removing lockfile %s", lockfile)
-            sys.exit(exitcode)
+            EXITCODE = get_site_status()
+            os.remove(LOCKFILE)
+            LOGGER.debug("removing lockfile %s", LOCKFILE)
+            sys.exit(EXITCODE)
     else:
-        exitcode = get_site_status()
-        sys.exit(exitcode)
+        EXITCODE = get_site_status()
+        sys.exit(EXITCODE)
