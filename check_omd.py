@@ -71,6 +71,7 @@ def get_site_status():
             )
         else:
             print(f"UNKNOWN: unable to check site: '{err.rstrip()}'")
+        return_code = 3
 
     if proc.stdout:
         # try to find out whether omd was executed as root
@@ -79,7 +80,7 @@ def get_site_status():
                 "UNKNOWN: unable to check site, it seems this plugin is "
                 "executed as root (use OMD site context!)"
             )
-            return 3
+            return_code = 3
 
         # check all services
         fail_srvs = []
@@ -146,18 +147,20 @@ def get_site_status():
 
         if len(fail_srvs) == 0 and len(warn_srvs) == 0:
             print(f"OK: OMD site '{site}' services are running.")
+            return_code = 0
         elif len(fail_srvs) > 0:
             _services = ' '.join(fail_srvs)
             print(
                 f"CRITICAL: OMD site 'site' has failed service(s): '{_services}'"
             )
-            return 2
+            return_code = 2
         else:
             _services = ' '.join(warn_srvs)
             print(
                 f"WARNING: OMD site 'site' has service(s) in warning state: '{_services}'"
             )
-            return 1
+            return_code = 1
+    return return_code
 
 
 if __name__ == "__main__":
