@@ -128,7 +128,7 @@ def get_site_status():
                 )
         if OPTIONS.heal:
             if len(fail_srvs) == 0 and len(restarted_srvs) == 0:
-               return 0
+                return 0
             returncode = 1
             if len(fail_srvs) > 0:
                 _count = len(fail_srvs)
@@ -238,8 +238,8 @@ if __name__ == "__main__":
             print ("CRITICAL - Lockfile exists, exit program")
             sys.exit(2)
         else:
-            f = open(lockfile, 'x')
-            f.close()
+            with open(LOCKFILE, 'x', encoding="utf8") as f:
+                f.close()
             LOGGER.debug("created lockfile %s", LOCKFILE)
             # check site status
             EXITCODE = get_site_status()
