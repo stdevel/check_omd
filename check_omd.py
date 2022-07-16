@@ -29,7 +29,9 @@ logging: Logger instance
 """
 
 def raise_timeout(cmd, timeout):
-    print ("CRITICAL - executing command '{}' exceeded {} seconds timeout".format(" ".join(cmd), timeout))
+    """
+    Raises a timeout and exits the program
+    """
     if OPTIONS.heal:
         os.remove(lockfile)
         LOGGER.debug("removing lockfile %s", lockfile)
