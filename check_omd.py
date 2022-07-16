@@ -32,6 +32,8 @@ def raise_timeout(cmd, timeout):
     """
     Raises a timeout and exits the program
     """
+    _cmd = " ".join(cmd)
+    print(f"CRITICAL - executing command '{_cmd}' exceeded {timeout} seconds timeout")
     if OPTIONS.heal:
         os.remove(lockfile)
         LOGGER.debug("removing lockfile %s", lockfile)
@@ -58,13 +60,11 @@ def get_site_status():
     if proc.stderr:
         err = proc.stderr.decode('utf-8')
         if "no such site" in err:
-            print(
-                "UNKNOWN: unable to check site: '{0}' - did you miss "
-                "running this plugin as OMD site user?".format(err.rstrip())
+            print(f"UNKNOWN: unable to check site: '{err.rstrip()}' - did you miss "
+                "running this plugin as OMD site user?"
             )
         else:
-            print("UNKNOWN: unable to check site: '{0}'".format(err.rstrip()))
-        return 3
+            print(f"UNKNOWN: unable to check site: '{err.rstrip()}'")
 
     if proc.stdout:
         # try to find out whether omd was executed as root
@@ -124,39 +124,39 @@ def get_site_status():
                return 0
             returncode = 1
             if len(fail_srvs) > 0:
-                print("CRITICAL - could not restart {} service(s) on site '{}': '{}'".format(
-                    len(fail_srvs), site, ' '.join(fail_srvs)
-                    )
+                _count = len(fail_srvs)
+                _srvs = ' '.join(fail_srvs)
+                print(
+                    f"CRITICAL - could not restart {_count} service(s) on site '{site}': '{_srvs}'"
                 )
                 returncode = 2
             if len(restarted_srvs) > 0:
+                _count = len(restarted_srvs)
+                _srvs = ' '.join(restarted_srvs)
                 print(
-                    "WARNING: Restarted {} service(s) on site '{}': '{}'".format(
-                        len(restarted_srvs), site, ' '.join(restarted_srvs)
-                    )
+                    f"WARNING: Restarted {_count} service(s) on site '{site}': '{_srvs}'"
                 )
             return returncode
 
         if len(fail_srvs) == 0 and len(warn_srvs) == 0:
-            print("OK: OMD site '{0}' services are running.".format(site))
-            return 0
+            print(f"OK: OMD site '{site}' services are running.")
         elif len(fail_srvs) > 0:
+            _services = ' '.join(fail_srvs)
             print(
-                "CRITICAL: OMD site '{0}' has failed service(s): "
-                "'{1}'".format(site, ' '.join(fail_srvs))
+                f"CRITICAL: OMD site 'site' has failed service(s): '{_services}'"
             )
             return 2
         else:
+            _services = ' '.join(warn_srvs)
             print(
-                "WARNING: OMD site '{0}' has service(s) in warning state: "
-                "'{1}'".format(site, ' '.join(warn_srvs))
+                f"WARNING: OMD site 'site' has service(s) in warning state: '{_services}'"
             )
             return 1
 
 
 if __name__ == "__main__":
     if sys.version_info[0] < 3 or (sys.version_info[0] == 3 and sys.version_info[1] < 6):
-        print ("Unsupported python version, 3.6 required, you have {}".format(sys.version))
+        print(f"Unsupported python version, 3.6 required, you have {sys.version}")
         sys.exit(2)
     # define description, version and load parser
     DESC = '''%prog is used to check a particular OMD site status. By default,
